@@ -112,8 +112,8 @@ struct jetFilter {
     jetReclusterer.isReclustering = true;
     jetReclusterer.algorithm = fastjet::JetAlgorithm::antikt_algorithm;
     jetReclusterer.jetR = cfgJetR;
-    jetReclusterer.jetEtaMin = -2*cfgTPCVolume;
-    jetReclusterer.jetEtaMax = 2*cfgTPCVolume;
+    jetReclusterer.jetEtaMin = -2 * cfgTPCVolume;
+    jetReclusterer.jetEtaMax = 2 * cfgTPCVolume;
   }
 
   // declare filters on tracks
@@ -160,7 +160,7 @@ struct jetFilter {
 
     // Check whether there is a high pT charged jet
     for (auto& jet : jetReclustered) { // start loop over charged jets
-      if (fabs(jet.eta()) < 2*cfgTPCVolume) {
+      if (fabs(jet.eta()) < 2 * cfgTPCVolume) {
         if (jet.perp() >= selectionJetChHighPt) {
           spectra.fill(HIST("ptphiJetChSelected"), jet.perp(),
                        jet.phi()); // charged jet pT vs phi

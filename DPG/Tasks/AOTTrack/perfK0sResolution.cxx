@@ -14,7 +14,7 @@
 #include "Framework/AnalysisDataModel.h"
 #include "Framework/ASoAHelpers.h"
 #include "ReconstructionDataFormats/Track.h"
-#include "Common/Core/RecoDecay.h"
+#include "ReconstructionDataFormats/PID.h"
 #include "Common/Core/trackUtilities.h"
 #include "PWGLF/DataModel/LFStrangenessTables.h"
 #include "Common/Core/TrackSelection.h"
@@ -23,6 +23,7 @@
 #include "Common/DataModel/PIDResponse.h"
 
 using namespace o2;
+using namespace o2::track;
 using namespace o2::framework;
 using namespace o2::framework::expressions;
 
@@ -59,6 +60,8 @@ struct perfK0sResolution {
   Configurable<float> v0lifetime{"v0lifetime", 3., "n ctau"};
   Configurable<float> rapidity{"rapidity", 0.5, "rapidity"};
   Configurable<float> nSigTPC{"nSigTPC", 10., "nSigTPC"};
+  Configurable<int> requireTRDneg{"requireTRDneg", 0, "requireTRDneg"}; // 0: no requirement, >0: TRD only tracks, <0: reject TRD tracks
+  Configurable<int> requireTRDpos{"requireTRDpos", 0, "requireTRDpos"}; // 0: no requirement, >0: TRD only tracks, <0: reject TRD tracks
   Configurable<bool> eventSelection{"eventSelection", true, "event selection"};
 
   template <typename T1, typename T2, typename C>
@@ -71,13 +74,17 @@ struct perfK0sResolution {
       return kFALSE;
     if (v0.v0radius() < v0setting_radius)
       return kFALSE;
-    if (v0.distovertotmom(collision.posX(), collision.posY(), collision.posZ()) * RecoDecay::getMassPDG(kK0Short) > 2.684 * v0lifetime)
+    if (v0.distovertotmom(collision.posX(), collision.posY(), collision.posZ()) * pid_constants::sMasses[PID::K0] > 2.684 * v0lifetime)
       return kFALSE;
 
     // Apply selections on V0 daughters
     if (!ntrack.hasTPC() || !ptrack.hasTPC())
       return kFALSE;
     if (ntrack.tpcNSigmaPi() > nSigTPC || ptrack.tpcNSigmaPi() > nSigTPC)
+      return kFALSE;
+    if ((requireTRDneg > 0 && !ntrack.hasTRD()) || (requireTRDneg < 0 && ntrack.hasTRD()))
+      return kFALSE;
+    if ((requireTRDpos > 0 && !ptrack.hasTRD()) || (requireTRDpos < 0 && ptrack.hasTRD()))
       return kFALSE;
     return kTRUE;
   }

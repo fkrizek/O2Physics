@@ -33,7 +33,7 @@
 #include "Common/DataModel/Centrality.h"
 #include "Common/DataModel/Multiplicity.h"
 #include "Common/Core/trackUtilities.h"
-#include "Common/Core/RecoDecay.h"
+#include "PWGHF/Core/PDG.h"
 #include "Common/DataModel/EventSelection.h"
 #include "PWGLF/DataModel/LFStrangenessTables.h"
 #include "Common/DataModel/TrackSelectionTables.h"
@@ -181,7 +181,7 @@ struct f1protoninitializer {
     if (fabs(candidate.dcav0topv(collision.posX(), collision.posY(), collision.posZ())) > cMaxV0DCA) {
       return false;
     }
-    float CtauK0s = candidate.distovertotmom(collision.posX(), collision.posY(), collision.posZ()) * RecoDecay::getMassPDG(kK0Short);
+    float CtauK0s = candidate.distovertotmom(collision.posX(), collision.posY(), collision.posZ()) * o2::analysis::pdg::MassK0Short;
     float lowmasscutks0 = 0.497 - 2.0 * cSigmaMassKs0;
     float highmasscutks0 = 0.497 + 2.0 * cSigmaMassKs0;
     if (fabs(CtauK0s) > cMaxV0LifeTime || candidate.mK0Short() < lowmasscutks0 || candidate.mK0Short() > highmasscutks0) {
@@ -191,9 +191,9 @@ struct f1protoninitializer {
   }
 
   /////////////////////////////////////////////////////////////
-  double massPi = RecoDecay::getMassPDG(kPiPlus);
-  double massKa = RecoDecay::getMassPDG(kKPlus);
-  double massK0s = RecoDecay::getMassPDG(kK0Short);
+  double massPi = o2::analysis::pdg::MassPiPlus;
+  double massKa = o2::analysis::pdg::MassKPlus;
+  double massK0s = o2::analysis::pdg::MassK0Short;
   double massF1{0.};
   double masskKs0{0.};
   double pT{0.};
@@ -294,16 +294,16 @@ struct f1protoninitializer {
           if (numberPiKpair == 1) {
             qaRegistry.fill(HIST("hInvMassk0"), track3.mK0Short(), track3.pt());
           }
-          pT = RecoDecay::pt(array{track1.px() + track2.px() + track3.px(), track1.py() + track2.py() + track3.py()});
-          auto arrMomF1 = array{
-            array{track1.px(), track1.py(), track1.pz()},
-            array{track2.px(), track2.py(), track2.pz()},
-            array{track3.px(), track3.py(), track3.pz()}};
-          auto arrMom23 = array{
-            array{track2.px(), track2.py(), track2.pz()},
-            array{track3.px(), track3.py(), track3.pz()}};
-          masskKs0 = RecoDecay::m(arrMom23, array{massKa, massK0s});
-          massF1 = RecoDecay::m(arrMomF1, array{massPi, massKa, massK0s});
+          pT = RecoDecay::pt(std::array{track1.px() + track2.px() + track3.px(), track1.py() + track2.py() + track3.py()});
+          auto arrMomF1 = std::array{
+            std::array{track1.px(), track1.py(), track1.pz()},
+            std::array{track2.px(), track2.py(), track2.pz()},
+            std::array{track3.px(), track3.py(), track3.pz()}};
+          auto arrMom23 = std::array{
+            std::array{track2.px(), track2.py(), track2.pz()},
+            std::array{track3.px(), track3.py(), track3.pz()}};
+          masskKs0 = RecoDecay::m(arrMom23, std::array{massKa, massK0s});
+          massF1 = RecoDecay::m(arrMomF1, std::array{massPi, massKa, massK0s});
           qaRegistry.fill(HIST("hInvMassKKs0"), masskKs0);
           if ((masskKs0 > cMaxMassKKs0) || (massF1 > cMaxMassF1) || (pT < cMinF1Pt)) {
             continue;

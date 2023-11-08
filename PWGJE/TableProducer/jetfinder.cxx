@@ -11,15 +11,17 @@
 
 // jet finder task
 //
-// Author: Jochen Klein, Nima Zardoshti, Raymond Ehlers
+/// \author Nima Zardoshti <nima.zardoshti@cern.ch>
+/// \author Jochen Klein <jochen.klein@cern.ch>
+/// \author Raymond Ehlers <raymond.ehlers@cern.ch>, ORNL
 
 #include "PWGJE/TableProducer/jetfinder.h"
+#include "Framework/runDataProcessing.h"
 
 using namespace o2;
+using namespace o2::analysis;
 using namespace o2::framework;
 using namespace o2::framework::expressions;
-
-#include "Framework/runDataProcessing.h"
 
 template <typename JetTable, typename ConstituentTable, typename ConstituentSubTable>
 struct JetFinderTask {
@@ -33,11 +35,13 @@ struct JetFinderTask {
   // track level configurables
   Configurable<float> trackPtMin{"trackPtMin", 0.15, "minimum track pT"};
   Configurable<float> trackPtMax{"trackPtMax", 1000.0, "maximum track pT"};
-  Configurable<float> trackEtaMin{"trackEtaMin", -0.8, "minimum track eta"};
-  Configurable<float> trackEtaMax{"trackEtaMax", 0.8, "maximum track eta"};
+  Configurable<float> trackEtaMin{"trackEtaMin", -0.9, "minimum track eta"};
+  Configurable<float> trackEtaMax{"trackEtaMax", 0.9, "maximum track eta"};
   Configurable<float> trackPhiMin{"trackPhiMin", -999, "minimum track phi"};
   Configurable<float> trackPhiMax{"trackPhiMax", 999, "maximum track phi"};
   Configurable<std::string> trackSelections{"trackSelections", "globalTracks", "set track selections"};
+  Configurable<std::string> eventSelections{"eventSelections", "sel8", "choose event selection"};
+  Configurable<std::string> particleSelections{"particleSelections", "PhysicalPrimary", "set particle selections"};
 
   // cluster level configurables
   Configurable<std::string> clusterDefinitionS{"clusterDefinition", "kV3Default", "cluster definition to be selected, e.g. V3Default"};
@@ -54,36 +58,39 @@ struct JetFinderTask {
   Configurable<std::vector<double>> jetRadius{"jetRadius", {0.4}, "jet resolution parameters"};
   Configurable<float> jetPtMin{"jetPtMin", 0.0, "minimum jet pT"};
   Configurable<float> jetPtMax{"jetPtMax", 1000.0, "maximum jet pT"};
-  Configurable<int> jetTypeParticleLevel{"jetTypeParticleLevel", 1, "Type of stored jets at MC particle leevel. 0 = full, 1 = charged, 2 = neutral"};
+  Configurable<float> jetEtaMin{"jetEtaMin", -99.0, "minimum jet pseudorapidity"};
+  Configurable<float> jetEtaMax{"jetEtaMax", 99.0, "maximum jet pseudorapidity"};
   Configurable<int> jetAlgorithm{"jetAlgorithm", 2, "jet clustering algorithm. 0 = kT, 1 = C/A, 2 = Anti-kT"};
   Configurable<int> jetRecombScheme{"jetRecombScheme", 0, "jet recombination scheme. 0 = E-scheme, 1 = pT-scheme, 2 = pT2-scheme"};
   Configurable<float> jetGhostArea{"jetGhostArea", 0.005, "jet ghost area"};
   Configurable<int> ghostRepeat{"ghostRepeat", 1, "set to 0 to gain speed if you dont need area calculation"};
   Configurable<bool> DoTriggering{"DoTriggering", false, "used for the charged jet trigger to remove the eta constraint on the jet axis"};
-  Configurable<bool> DoRhoAreaSub{"DoRhoAreaSub", false, "do rho area subtraction"};
-  Configurable<bool> DoConstSub{"DoConstSub", false, "do constituent subtraction"};
 
-  Service<O2DatabasePDG> pdg;
-  std::string trackSelection;
+  Service<o2::framework::O2DatabasePDG> pdgDatabase;
+  int trackSelection = -1;
+  int eventSelection = -1;
+  std::string particleSelection;
 
   JetFinder jetFinder;
   std::vector<fastjet::PseudoJet> inputParticles;
 
+  bool doConstSub = false;
+
   void init(InitContext const&)
   {
-    trackSelection = static_cast<std::string>(trackSelections);
-
-    if (DoRhoAreaSub) {
-      jetFinder.setBkgSubMode(JetFinder::BkgSubMode::rhoAreaSub);
-    }
-    if (DoConstSub) {
-      jetFinder.setBkgSubMode(JetFinder::BkgSubMode::constSub);
-    }
+    trackSelection = JetDerivedDataUtilities::initialiseTrackSelection(static_cast<std::string>(trackSelections));
+    eventSelection = JetDerivedDataUtilities::initialiseEventSelection(static_cast<std::string>(eventSelections));
+    particleSelection = static_cast<std::string>(particleSelections);
 
     jetFinder.etaMin = trackEtaMin;
     jetFinder.etaMax = trackEtaMax;
     jetFinder.jetPtMin = jetPtMin;
     jetFinder.jetPtMax = jetPtMax;
+    jetFinder.jetEtaMin = jetEtaMin;
+    jetFinder.jetEtaMax = jetEtaMax;
+    if (jetEtaMin < -98.0) {
+      jetFinder.jetEtaDefault = true;
+    }
     jetFinder.algorithm = static_cast<fastjet::JetAlgorithm>(static_cast<int>(jetAlgorithm));
     jetFinder.recombScheme = static_cast<fastjet::RecombinationScheme>(static_cast<int>(jetRecombScheme));
     jetFinder.ghostArea = jetGhostArea;
@@ -93,66 +100,81 @@ struct JetFinderTask {
     }
   }
 
-  o2::aod::EMCALClusterDefinition clusterDefinition = o2::aod::emcalcluster::getClusterDefinitionFromString(clusterDefinitionS.value);
-  Filter collisionFilter = nabs(aod::collision::posZ) < vertexZCut;
-  Filter trackCuts = (aod::track::pt >= trackPtMin && aod::track::pt < trackPtMax && aod::track::eta > trackEtaMin && aod::track::eta < trackEtaMax && aod::track::phi >= trackPhiMin && aod::track::phi <= trackPhiMax); // do we need eta cut both here and in globalselection?
-  Filter partCuts = (aod::mcparticle::pt >= trackPtMin && aod::mcparticle::pt < trackPtMax);
-  Filter clusterFilter = (o2::aod::emcalcluster::definition == static_cast<int>(clusterDefinition) && aod::emcalcluster::eta > clusterEtaMin && aod::emcalcluster::eta < clusterEtaMax && aod::emcalcluster::phi >= clusterPhiMin && aod::emcalcluster::phi <= clusterPhiMax && aod::emcalcluster::energy >= clusterEnergyMin && aod::emcalcluster::time > clusterTimeMin && aod::emcalcluster::time < clusterTimeMax && (clusterRejectExotics && aod::emcalcluster::isExotic != true));
+  aod::EMCALClusterDefinition clusterDefinition = aod::emcalcluster::getClusterDefinitionFromString(clusterDefinitionS.value);
+  Filter collisionFilter = nabs(aod::jcollision::posZ) < vertexZCut;
+  Filter trackCuts = (aod::jtrack::pt >= trackPtMin && aod::jtrack::pt < trackPtMax && aod::jtrack::eta > trackEtaMin && aod::jtrack::eta < trackEtaMax && aod::jtrack::phi >= trackPhiMin && aod::jtrack::phi <= trackPhiMax); // do we need eta cut both here and in globalselection?
+  Filter partCuts = (aod::jmcparticle::pt >= trackPtMin && aod::jmcparticle::pt < trackPtMax && aod::jmcparticle::eta > trackEtaMin && aod::jmcparticle::eta < trackEtaMax);
+  Filter clusterFilter = (aod::jcluster::definition == static_cast<int>(clusterDefinition) && aod::jcluster::eta > clusterEtaMin && aod::jcluster::eta < clusterEtaMax && aod::jcluster::phi >= clusterPhiMin && aod::jcluster::phi <= clusterPhiMax && aod::jcluster::energy >= clusterEnergyMin && aod::jcluster::time > clusterTimeMin && aod::jcluster::time < clusterTimeMax && (clusterRejectExotics && aod::jcluster::isExotic != true));
 
-  void processDummy(aod::Collisions const& collision)
+  void processDummy(aod::JCollision const& collision)
   {
   }
 
   PROCESS_SWITCH(JetFinderTask, processDummy, "Dummy process function turned on by default", true);
 
-  void processChargedJets(soa::Filtered<soa::Join<aod::Collisions, aod::EvSels>>::iterator const& collision,
+  void processChargedJets(soa::Filtered<aod::JCollisions>::iterator const& collision,
                           JetTracks const& tracks)
   {
-    if (!selectCollision(collision)) {
+    if (!JetDerivedDataUtilities::selectCollision(collision, eventSelection)) {
       return;
     }
     inputParticles.clear();
     analyseTracks<JetTracks, JetTracks::iterator>(inputParticles, tracks, trackSelection);
-    findJets(jetFinder, inputParticles, jetRadius, collision, jetsTable, constituentsTable, constituentsSubTable, DoConstSub);
+    findJets(jetFinder, inputParticles, jetRadius, collision, jetsTable, constituentsTable, constituentsSubTable, doConstSub);
   }
 
   PROCESS_SWITCH(JetFinderTask, processChargedJets, "Data jet finding for charged jets", false);
 
-  void processNeutralJets(soa::Filtered<soa::Join<aod::Collisions, aod::EvSels>>::iterator const& collision,
+  void processNeutralJets(soa::Filtered<aod::JCollisions>::iterator const& collision,
                           JetClusters const& clusters)
   {
-    if (!collision.alias()[kTVXinEMC]) {
+    if (!JetDerivedDataUtilities::eventEMCAL(collision)) {
       return;
     }
     inputParticles.clear();
     analyseClusters(inputParticles, &clusters);
-    findJets(jetFinder, inputParticles, jetRadius, collision, jetsTable, constituentsTable, constituentsSubTable, DoConstSub);
+    findJets(jetFinder, inputParticles, jetRadius, collision, jetsTable, constituentsTable, constituentsSubTable, doConstSub);
   }
   PROCESS_SWITCH(JetFinderTask, processNeutralJets, "Data jet finding for neutral jets", false);
 
-  void processFullJets(soa::Filtered<soa::Join<aod::Collisions, aod::EvSels>>::iterator const& collision,
+  void processFullJets(soa::Filtered<aod::JCollisions>::iterator const& collision,
                        JetTracks const& tracks,
                        JetClusters const& clusters)
   {
-    if (!collision.alias()[kTVXinEMC]) {
+    if (!JetDerivedDataUtilities::eventEMCAL(collision)) {
       return;
     }
     inputParticles.clear();
     analyseTracks<JetTracks, JetTracks::iterator>(inputParticles, tracks, trackSelection);
     analyseClusters(inputParticles, &clusters);
-    findJets(jetFinder, inputParticles, jetRadius, collision, jetsTable, constituentsTable, constituentsSubTable, DoConstSub);
+    findJets(jetFinder, inputParticles, jetRadius, collision, jetsTable, constituentsTable, constituentsSubTable, doConstSub);
   }
-
   PROCESS_SWITCH(JetFinderTask, processFullJets, "Data jet finding for full and neutral jets", false);
 
-  void processParticleLevelJets(aod::McCollision const& collision, aod::McParticles const& particles)
+  void processParticleLevelChargedJets(aod::JMcCollision const& collision, soa::Filtered<aod::JMcParticles> const& particles)
   {
     // TODO: MC event selection?
-    analyseParticles<aod::McParticles, aod::McParticles::iterator>(inputParticles, trackEtaMin, trackEtaMax, jetTypeParticleLevel, particles, pdg->Instance());
-    findJets(jetFinder, inputParticles, jetRadius, collision, jetsTable, constituentsTable, constituentsSubTable, DoConstSub);
+    analyseParticles<soa::Filtered<aod::JMcParticles>, soa::Filtered<aod::JMcParticles>::iterator>(inputParticles, particleSelection, 1, particles, pdgDatabase);
+    findJets(jetFinder, inputParticles, jetRadius, collision, jetsTable, constituentsTable, constituentsSubTable, doConstSub);
+  }
+  PROCESS_SWITCH(JetFinderTask, processParticleLevelChargedJets, "Particle level charged jet finding", false);
+
+  void processParticleLevelNeutralJets(aod::JMcCollision const& collision, soa::Filtered<aod::JMcParticles> const& particles)
+  {
+    // TODO: MC event selection?
+    analyseParticles<soa::Filtered<aod::JMcParticles>, soa::Filtered<aod::JMcParticles>::iterator>(inputParticles, particleSelection, 2, particles, pdgDatabase);
+    findJets(jetFinder, inputParticles, jetRadius, collision, jetsTable, constituentsTable, constituentsSubTable, doConstSub);
+  }
+  PROCESS_SWITCH(JetFinderTask, processParticleLevelNeutralJets, "Particle level neutral jet finding", false);
+
+  void processParticleLevelFullJets(aod::JMcCollision const& collision, soa::Filtered<aod::JMcParticles> const& particles)
+  {
+    // TODO: MC event selection?
+    analyseParticles<soa::Filtered<aod::JMcParticles>, soa::Filtered<aod::JMcParticles>::iterator>(inputParticles, particleSelection, 0, particles, pdgDatabase);
+    findJets(jetFinder, inputParticles, jetRadius, collision, jetsTable, constituentsTable, constituentsSubTable, doConstSub);
   }
 
-  PROCESS_SWITCH(JetFinderTask, processParticleLevelJets, "Particle level jet finding", false);
+  PROCESS_SWITCH(JetFinderTask, processParticleLevelFullJets, "Particle level full jet finding", false);
 };
 
 using JetFinderDataCharged = JetFinderTask<o2::aod::ChargedJets, o2::aod::ChargedJetConstituents, o2::aod::ChargedJetConstituentsSub>;

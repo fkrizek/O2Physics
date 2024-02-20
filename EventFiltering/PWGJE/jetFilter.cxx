@@ -46,7 +46,7 @@ static const std::vector<std::string> highPtObjectsNames = {"JetChLowPt", "JetCh
 struct jetFilter {
   enum { kJetChLowPt = 0,
          kJetChHighPt = 1,
-         kHighPtObjects = 2, 
+         kHighPtObjects = 2,
          kAllMBEvents = 3,
          kAllObjects };
 
@@ -68,8 +68,7 @@ struct jetFilter {
   ConfigurableAxis cfgJetRadii{"cfgJetRadii", {VARIABLE_WIDTH, 0.2, 0.4, 0.6, 1.}, "jet resolution parameters (KEEP THE LAST PARAMETER AT 1.)"};
 
   Configurable<bool> cfgWithRhoSubtr{"cfgWithRhoSubtr", 0,
-                              "with rho subtraction"}; // jet cone radius
-
+                                     "with rho subtraction"}; // jet cone radius
 
   std::vector<double> jetRFidVolume; // pseudorapidity limit for given a jet with given R
   std::vector<int> jetIntR;          // jet radius * 100
@@ -119,19 +118,18 @@ struct jetFilter {
     spectra.add("hPtAKTJetsInclusive", "#it{p}_{T} of AKT charged jets in |#eta| < 0.9 - #it{R};",
                 {HistType::kTH2F, {jetRadiiAxis, axisPt}});
 
-
     spectra.add("hEtaAKTJetsInclusive", "#eta of AKT charged jets with #it{p}_{T} > 10 GeV in |#eta| < 0.9 - #it{R};",
                 {HistType::kTH2F, {jetRadiiAxis, axisEta}});
 
     spectra.add("hPhiAKTJetsInclusive", "#varphi of AKT charged jets with #it{p}_{T} > 10 GeV in |#eta| < 0.9 - #it{R};",
                 {HistType::kTH2F, {jetRadiiAxis, axisPhi}});
 
-    if(cfgWithRhoSubtr){
+    if (cfgWithRhoSubtr) {
       spectra.add("hPtAKTJetsInclusiveBgSubtr", "#it{p}_{T} of AKT charged jets in |#eta| < 0.9 - #it{R};",
                   {HistType::kTH2F, {jetRadiiAxis, axisPt}});
 
       spectra.add("hRho", "Underlying event density #rho", HistType::kTH1F,
-                   {{200, 0., +20., "#rho (GeV/#it{c})"}});
+                  {{200, 0., +20., "#rho (GeV/#it{c})"}});
     }
 
     auto scalers{std::get<std::shared_ptr<TH1>>(spectra.add(
@@ -154,15 +152,15 @@ struct jetFilter {
     // collision process loop
     bool keepEvent[kHighPtObjects]{false};
     spectra.fill(HIST("fCollZpos"), collision.posZ());
-    spectra.fill(HIST("fProcessedEvents"), kAllMBEvents); //all minimum bias events 
+    spectra.fill(HIST("fProcessedEvents"), kAllMBEvents); // all minimum bias events
 
     // FILL SPECTRA OF INCLUSIVE JETS IN FIDUCIAL VOLUME
     if (TMath::Abs(collision.posZ()) < cfgZvtx) {
-      spectra.fill(HIST("fProcessedEvents"), kHighPtObjects); //minimum bias events |z_vtx|<10 cm 
+      spectra.fill(HIST("fProcessedEvents"), kHighPtObjects); // minimum bias events |z_vtx|<10 cm
 
-      if(cfgWithRhoSubtr){
+      if (cfgWithRhoSubtr) {
         spectra.fill(HIST("hRho"), collision.rho());
-      }	
+      }
 
       for (const auto& jet : jets) { // jets are ordered by pT
         for (unsigned int ir = 0; ir < jetIntR.size(); ir++) {
@@ -171,9 +169,9 @@ struct jetFilter {
               float jetr = (jet.r() / 100. + 1e-5);
               spectra.fill(HIST("hPtAKTJetsInclusive"), jetr, jet.pt());
 
-	      if(cfgWithRhoSubtr){
-	        spectra.fill(HIST("hPtAKTJetsInclusiveBgSubtr"), jetr, jet.pt() - (collision.rho() * jet.area()));
-	      }
+              if (cfgWithRhoSubtr) {
+                spectra.fill(HIST("hPtAKTJetsInclusiveBgSubtr"), jetr, jet.pt() - (collision.rho() * jet.area()));
+              }
 
               if (jet.pt() > 10.) {
                 spectra.fill(HIST("hEtaAKTJetsInclusive"), jetr, jet.eta());

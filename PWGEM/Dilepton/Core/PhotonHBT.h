@@ -99,7 +99,7 @@ struct PhotonHBT {
   Configurable<int> cfgEP2Estimator_for_Mix{"cfgEP2Estimator_for_Mix", 3, "FT0M:0, FT0A:1, FT0C:2, BTot:3, BPos:4, BNeg:5"};
   Configurable<int> cfgCentEstimator{"cfgCentEstimator", 2, "FT0M:0, FT0A:1, FT0C:2"};
   Configurable<int> cfgOccupancyEstimator{"cfgOccupancyEstimator", 0, "FT0C:0, Track:1"};
-  Configurable<float> cfgCentMin{"cfgCentMin", 0, "min. centrality"};
+  Configurable<float> cfgCentMin{"cfgCentMin", -1, "min. centrality"};
   Configurable<float> cfgCentMax{"cfgCentMax", 999, "max. centrality"};
   Configurable<float> maxY{"maxY", 0.8, "maximum rapidity for reconstructed particles"};
   Configurable<bool> cfgDoMix{"cfgDoMix", true, "flag for event mixing"};
@@ -589,30 +589,42 @@ struct PhotonHBT {
     // fDielectronCut.SetPRangeForITSNsigmaPr(dielectroncuts.cfg_min_p_ITSNsigmaPr, dielectroncuts.cfg_max_p_ITSNsigmaPr);
 
     if (dielectroncuts.cfg_pid_scheme == static_cast<int>(DielectronCut::PIDSchemes::kPIDML)) { // please call this at the end of DefineDileptonCut
-      static constexpr int nClassesMl = 2;
-      const std::vector<int> cutDirMl = {o2::cuts_ml::CutNot, o2::cuts_ml::CutSmaller};
-      const std::vector<std::string> labelsClasses = {"Background", "Signal"};
-      const uint32_t nBinsMl = dielectroncuts.binsMl.value.size() - 1;
-      const std::vector<std::string> labelsBins(nBinsMl, "bin");
-      double cutsMlArr[nBinsMl][nClassesMl];
-      for (uint32_t i = 0; i < nBinsMl; i++) {
-        cutsMlArr[i][0] = 0.;
-        cutsMlArr[i][1] = dielectroncuts.cutsMl.value[i];
+      std::vector<float> binsML{};
+      binsML.reserve(dielectroncuts.binsMl.value.size());
+      for (size_t i = 0; i < dielectroncuts.binsMl.value.size(); i++) {
+        binsML.emplace_back(dielectroncuts.binsMl.value[i]);
       }
-      o2::framework::LabeledArray<double> cutsMl = {cutsMlArr[0], nBinsMl, nClassesMl, labelsBins, labelsClasses};
-
-      mlResponseSingleTrack.configure(dielectroncuts.binsMl.value, cutsMl, cutDirMl, nClassesMl);
-      if (dielectroncuts.loadModelsFromCCDB) {
-        ccdbApi.init(ccdburl);
-        mlResponseSingleTrack.setModelPathsCCDB(dielectroncuts.onnxFileNames.value, ccdbApi, dielectroncuts.onnxPathsCCDB.value, dielectroncuts.timestampCCDB.value);
-      } else {
-        mlResponseSingleTrack.setModelPathsLocal(dielectroncuts.onnxFileNames.value);
+      std::vector<float> thresholdsML{};
+      thresholdsML.reserve(dielectroncuts.cutsMl.value.size());
+      for (size_t i = 0; i < dielectroncuts.cutsMl.value.size(); i++) {
+        thresholdsML.emplace_back(dielectroncuts.cutsMl.value[i]);
       }
-      mlResponseSingleTrack.cacheInputFeaturesIndices(dielectroncuts.namesInputFeatures);
-      mlResponseSingleTrack.cacheBinningIndex(dielectroncuts.nameBinningFeature);
-      mlResponseSingleTrack.init(dielectroncuts.enableOptimizations.value);
+      fDielectronCut.SetMLThresholds(binsML, thresholdsML);
 
-      fDielectronCut.SetPIDMlResponse(&mlResponseSingleTrack);
+      // static constexpr int nClassesMl = 2;
+      // const std::vector<int> cutDirMl = {o2::cuts_ml::CutNot, o2::cuts_ml::CutSmaller};
+      // const std::vector<std::string> labelsClasses = {"Background", "Signal"};
+      // const uint32_t nBinsMl = dielectroncuts.binsMl.value.size() - 1;
+      // const std::vector<std::string> labelsBins(nBinsMl, "bin");
+      // double cutsMlArr[nBinsMl][nClassesMl];
+      // for (uint32_t i = 0; i < nBinsMl; i++) {
+      //   cutsMlArr[i][0] = 0.;
+      //   cutsMlArr[i][1] = dielectroncuts.cutsMl.value[i];
+      // }
+      // o2::framework::LabeledArray<double> cutsMl = {cutsMlArr[0], nBinsMl, nClassesMl, labelsBins, labelsClasses};
+
+      // mlResponseSingleTrack.configure(dielectroncuts.binsMl.value, cutsMl, cutDirMl, nClassesMl);
+      // if (dielectroncuts.loadModelsFromCCDB) {
+      //   ccdbApi.init(ccdburl);
+      //   mlResponseSingleTrack.setModelPathsCCDB(dielectroncuts.onnxFileNames.value, ccdbApi, dielectroncuts.onnxPathsCCDB.value, dielectroncuts.timestampCCDB.value);
+      // } else {
+      //   mlResponseSingleTrack.setModelPathsLocal(dielectroncuts.onnxFileNames.value);
+      // }
+      // mlResponseSingleTrack.cacheInputFeaturesIndices(dielectroncuts.namesInputFeatures);
+      // mlResponseSingleTrack.cacheBinningIndex(dielectroncuts.nameBinningFeature);
+      // mlResponseSingleTrack.init(dielectroncuts.enableOptimizations.value);
+
+      // fDielectronCut.SetPIDMlResponse(&mlResponseSingleTrack);
     } // end of PID ML
   }
 
@@ -840,11 +852,11 @@ struct PhotonHBT {
             continue;
           }
           if (dielectroncuts.cfg_pid_scheme == static_cast<int>(DielectronCut::PIDSchemes::kPIDML)) {
-            if (!cut1.template IsSelectedTrack<false, true>(pos1, collision) || !cut1.template IsSelectedTrack<false, true>(ele1, collision)) {
+            if (!cut1.template IsSelectedTrack<false>(pos1) || !cut1.template IsSelectedTrack<false>(ele1)) {
               continue;
             }
           } else { // cut-based
-            if (!cut1.template IsSelectedTrack<false, false>(pos1, collision) || !cut1.template IsSelectedTrack<false, false>(ele1, collision)) {
+            if (!cut1.template IsSelectedTrack<false>(pos1) || !cut1.template IsSelectedTrack<false>(ele1)) {
               continue;
             }
           }
@@ -868,11 +880,11 @@ struct PhotonHBT {
               continue;
             }
             if (dielectroncuts.cfg_pid_scheme == static_cast<int>(DielectronCut::PIDSchemes::kPIDML)) {
-              if (!cut2.template IsSelectedTrack<false, true>(pos2, collision) || !cut2.template IsSelectedTrack<false, true>(ele2, collision)) {
+              if (!cut2.template IsSelectedTrack<false>(pos2) || !cut2.template IsSelectedTrack<false>(ele2)) {
                 continue;
               }
             } else { // cut-based
-              if (!cut2.template IsSelectedTrack<false, false>(pos2, collision) || !cut2.template IsSelectedTrack<false, false>(ele2, collision)) {
+              if (!cut2.template IsSelectedTrack<false>(pos2) || !cut2.template IsSelectedTrack<false>(ele2)) {
                 continue;
               }
             }
@@ -986,11 +998,11 @@ struct PhotonHBT {
               continue;
             }
             if (dielectroncuts.cfg_pid_scheme == static_cast<int>(DielectronCut::PIDSchemes::kPIDML)) {
-              if (!cut2.template IsSelectedTrack<false, true>(pos2, collision) || !cut2.template IsSelectedTrack<false, true>(ele2, collision)) {
+              if (!cut2.template IsSelectedTrack<false>(pos2) || !cut2.template IsSelectedTrack<false>(ele2)) {
                 continue;
               }
             } else { // cut-based
-              if (!cut2.template IsSelectedTrack<false, false>(pos2, collision) || !cut2.template IsSelectedTrack<false, false>(ele2, collision)) {
+              if (!cut2.template IsSelectedTrack<false>(pos2) || !cut2.template IsSelectedTrack<false>(ele2)) {
                 continue;
               }
             }
@@ -1354,11 +1366,11 @@ struct PhotonHBT {
           continue;
         }
         if (dielectroncuts.cfg_pid_scheme == static_cast<int>(DielectronCut::PIDSchemes::kPIDML)) {
-          if (!cut.template IsSelectedTrack<false, true>(pos, collision) || !cut.template IsSelectedTrack<false, true>(ele, collision)) {
+          if (!cut.template IsSelectedTrack<false>(pos) || !cut.template IsSelectedTrack<false>(ele)) {
             continue;
           }
         } else { // cut-based
-          if (!cut.template IsSelectedTrack<false, false>(pos, collision) || !cut.template IsSelectedTrack<false, false>(ele, collision)) {
+          if (!cut.template IsSelectedTrack<false>(pos) || !cut.template IsSelectedTrack<false>(ele)) {
             continue;
           }
         }

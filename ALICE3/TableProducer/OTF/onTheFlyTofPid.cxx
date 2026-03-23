@@ -147,6 +147,7 @@ struct OnTheFlyTofPid {
   float mMagneticField = 0.0f;
   void init(o2::framework::InitContext& initContext)
   {
+    mGeoContainer.setCcdbManager(ccdb.operator->());
     mGeoContainer.init(initContext);
 
     const int nGeometries = mGeoContainer.getNumberOfConfigurations();
@@ -157,9 +158,7 @@ struct OnTheFlyTofPid {
       for (int icfg = 0; icfg < nGeometries; ++icfg) {
         const std::string histPath = "Configuration_" + std::to_string(icfg) + "/";
         mSmearer.emplace_back(std::make_unique<o2::delphes::DelphesO2TrackSmearer>());
-        mSmearer[icfg]->setCleanupDownloadedFile(mGeoContainer.cleanLutWhenLoaded());
         mSmearer[icfg]->setCcdbManager(ccdb.operator->());
-        mSmearer[icfg]->setDownloadPath("./.ALICE3/TOFPID/");
         std::map<std::string, std::string> globalConfiguration = mGeoContainer.getConfiguration(icfg, "global");
         for (const auto& entry : globalConfiguration) {
           int pdg = 0;

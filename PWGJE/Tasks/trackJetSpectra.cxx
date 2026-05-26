@@ -974,14 +974,14 @@ struct TrackJetSpectra {
     }
 
     for (const auto& jetDet : detJets) {
-       if(isJetWithHighPtConstituent(jetDet, tracks))
-         continue;
+      if (isJetWithHighPtConstituent(jetDet, tracks))
+        continue;
 
-       auto detJetPt = jetDet.pt();
-       spectra.fill(HIST("hDetLevelInclusiveJetsPt"), detJetPt, weight);
-       if (!jetDet.has_matchedJetGeo()) {
-         spectra.fill(HIST("hFakeInclusiveJetsPt"), detJetPt, weight);
-       }
+      auto detJetPt = jetDet.pt();
+      spectra.fill(HIST("hDetLevelInclusiveJetsPt"), detJetPt, weight);
+      if (!jetDet.has_matchedJetGeo()) {
+        spectra.fill(HIST("hFakeInclusiveJetsPt"), detJetPt, weight);
+      }
     }
   }
 };

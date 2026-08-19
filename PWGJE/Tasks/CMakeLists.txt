@@ -277,6 +277,10 @@ if(FastJet_FOUND)
                         SOURCES jetSpectraCharged.cxx
                         PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::PWGJECore O2Physics::AnalysisCore
                         COMPONENT_NAME Analysis)
+    o2physics_add_dpl_workflow(jet-spectra-charged-gen
+                        SOURCES jetSpectraChargedGen.cxx
+                        PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::PWGJECore O2Physics::AnalysisCore
+                        COMPONENT_NAME Analysis)
     o2physics_add_dpl_workflow(charged-jet-hadron
                         SOURCES chargedJetHadron.cxx
                         PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::PWGJECore O2Physics::AnalysisCore
@@ -439,5 +443,17 @@ if(FastJet_FOUND)
     o2physics_add_dpl_workflow(bjet-cent-mult
                         SOURCES bjetCentMult.cxx
                         PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::PWGJECore O2Physics::AnalysisCore
+                        COMPONENT_NAME Analysis)
+    o2physics_add_dpl_workflow(jet-hadrons-pid
+                        SOURCES jetHadronsPid.cxx
+                        PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore O2Physics::PWGJECore FastJet::FastJet FastJet::Contrib O2Physics::EventFilteringUtils
+                        COMPONENT_NAME Analysis)
+    o2physics_add_dpl_workflow(jet-hf-ang-substructure
+                        SOURCES jetHFAngularity.cxx
+                        PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::PWGJECore O2Physics::AnalysisCore
+                        COMPONENT_NAME Analysis)
+    o2physics_add_dpl_workflow(jet-upc-qa
+                        SOURCES jetUpcQa.cxx
+                        PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::PWGJECore O2Physics::AnalysisCore O2Physics::AnalysisCCDB O2Physics::EventFilteringUtils O2Physics::SGCutParHolder
                         COMPONENT_NAME Analysis)
 endif()

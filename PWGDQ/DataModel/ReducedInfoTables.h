@@ -152,6 +152,11 @@ DECLARE_SOA_COLUMN(CORR4REF, corr4ref, float);             //!  Ref Flow correla
 DECLARE_SOA_COLUMN(M11REF, m11ref, float);                 //!  Weighted multiplicity of <<2>> for reference flow
 DECLARE_SOA_COLUMN(M1111REF, m1111ref, float);             //!  Weighted multiplicity of <<4>> for reference flow
 DECLARE_SOA_COLUMN(M11REFetagap, m11refetagap, float);     //!  Weighted multiplicity of <<2>>  etagap for reference flow
+
+DECLARE_SOA_COLUMN(Psi2Random, psi2random, float); //!  Event plane angle from random subevent
+DECLARE_SOA_COLUMN(Psi2A, psi2a, float);           //!  Event plane angle from Q-vector A
+DECLARE_SOA_COLUMN(Psi2B, psi2b, float);           //!  Event plane angle from Q-vector B
+DECLARE_SOA_COLUMN(Psi2C, psi2c, float);           //!  Event plane angle from Q-vector C
 } // namespace reducedevent
 
 DECLARE_SOA_TABLE_STAGED(ReducedEvents, "REDUCEDEVENT", //!   Main event information table
@@ -361,6 +366,39 @@ DECLARE_SOA_TABLE(ReducedFITs, "AOD", "REDUCEDFIT", //! FIT detector information
 
 using ReducedFIT = ReducedFITs::iterator;
 
+namespace reducedemcal
+{
+// EMCal cluster information (from aod::EMCALClusters, see PWGJE/DataModel/EMCALClusters.h)
+DECLARE_SOA_INDEX_COLUMN(ReducedEvent, reducedevent);                  //!
+DECLARE_SOA_BITMAP_COLUMN(FilteringFlags, filteringFlags, 64);         //! Bitmap of the cluster selections
+DECLARE_SOA_COLUMN(Energy, energy, float);                             //! cluster energy (GeV)
+DECLARE_SOA_COLUMN(CoreEnergy, coreEnergy, float);                     //! cluster core energy (GeV)
+DECLARE_SOA_COLUMN(RawEnergy, rawEnergy, float);                       //! raw cluster energy (GeV)
+DECLARE_SOA_COLUMN(Eta, eta, float);                                   //! cluster pseudorapidity (calculated using vertex)
+DECLARE_SOA_COLUMN(Phi, phi, float);                                   //! cluster azimuthal angle (calculated using vertex)
+DECLARE_SOA_COLUMN(M02, m02, float);                                   //! shower shape long axis
+DECLARE_SOA_COLUMN(M20, m20, float);                                   //! shower shape short axis
+DECLARE_SOA_COLUMN(NCells, nCells, int);                               //! number of cells in cluster
+DECLARE_SOA_COLUMN(Time, time, float);                                 //! cluster time (ns)
+DECLARE_SOA_COLUMN(IsExotic, isExotic, bool);                          //! flag to mark cluster as exotic
+DECLARE_SOA_COLUMN(DistanceToBadChannel, distanceToBadChannel, float); //! distance to bad channel
+DECLARE_SOA_COLUMN(NLM, nlm, int);                                     //! number of local maxima
+DECLARE_SOA_COLUMN(Definition, definition, int);                       //! cluster definition, see EMCALClusterDefinition.h
+DECLARE_SOA_COLUMN(IsAmbiguous, isAmbiguous, bool);                    //! true for clusters from BCs with no or multiple collisions
+} // namespace reducedemcal
+
+// Skimmed EMCal cluster information; standalone table (not joinable to the barrel track tables),
+//   the matching to barrel tracks is stored as an index column in the ReducedTracksBarrelEMCal table
+DECLARE_SOA_TABLE(ReducedEMCals, "AOD", "REDUCEDEMCAL", //!
+                  o2::soa::Index<>, reducedemcal::ReducedEventId, reducedemcal::FilteringFlags,
+                  reducedemcal::Energy, reducedemcal::CoreEnergy, reducedemcal::RawEnergy,
+                  reducedemcal::Eta, reducedemcal::Phi, reducedemcal::M02, reducedemcal::M20,
+                  reducedemcal::NCells, reducedemcal::Time, reducedemcal::IsExotic,
+                  reducedemcal::DistanceToBadChannel, reducedemcal::NLM, reducedemcal::Definition,
+                  reducedemcal::IsAmbiguous);
+
+using ReducedEMCal = ReducedEMCals::iterator;
+
 namespace reducedtrack
 {
 // basic track information
@@ -394,6 +432,9 @@ DECLARE_SOA_DYNAMIC_COLUMN(Pz, pz, //!
                            [](float pt, float eta) -> float { return pt * std::sinh(eta); });
 DECLARE_SOA_DYNAMIC_COLUMN(P, p, //!
                            [](float pt, float eta) -> float { return pt * std::cosh(eta); });
+DECLARE_SOA_INDEX_COLUMN(ReducedEMCal, matchedEMCalCluster);       //! matching index pointing to the ReducedEMCals table, -1 if no matched cluster
+DECLARE_SOA_COLUMN(EMCalMatchDeltaEta, emcalMatchDeltaEta, float); //! eta residual of the matched EMCal cluster w.r.t. the track
+DECLARE_SOA_COLUMN(EMCalMatchDeltaPhi, emcalMatchDeltaPhi, float); //! phi residual of the matched EMCal cluster w.r.t. the track
 } // namespace reducedtrack
 
 // basic track information
@@ -442,11 +483,18 @@ DECLARE_SOA_TABLE(ReducedTracksBarrelPID, "AOD", "RTBARRELPID", //!
 DECLARE_SOA_TABLE(ReducedTracksBarrelInfo, "AOD", "RTBARRELINFO",
                   reducedtrack::CollisionId, collision::PosX, collision::PosY, collision::PosZ, reducedtrack::TrackId);
 
+// barrel track EMCal matching information (joined with ReducedTracks);
+//   one entry per skimmed barrel track, the index is -1 for tracks without a matched cluster
+DECLARE_SOA_TABLE(ReducedTracksBarrelEMCal, "AOD", "RTBARRELEMCAL", //!
+                  reducedtrack::ReducedEMCalId,
+                  reducedtrack::EMCalMatchDeltaEta, reducedtrack::EMCalMatchDeltaPhi);
+
 using ReducedTrack = ReducedTracks::iterator;
 using ReducedTrackBarrel = ReducedTracksBarrel::iterator;
 using ReducedTrackBarrelCov = ReducedTracksBarrelCov::iterator;
 using ReducedTrackBarrelPID = ReducedTracksBarrelPID::iterator;
 using ReducedTrackBarrelInfo = ReducedTracksBarrelInfo::iterator;
+using ReducedTrackBarrelEMCal = ReducedTracksBarrelEMCal::iterator;
 
 namespace reducedtrackMC
 {
@@ -821,6 +869,9 @@ DECLARE_SOA_COLUMN(PairDCAxyz, pairDCAxyz, float);                              
 DECLARE_SOA_COLUMN(PairDCAxy, pairDCAxy, float);                                         //! Pair DCAxy to PV from KFParticle
 DECLARE_SOA_COLUMN(DeviationPairKF, deviationPairKF, float);                             //! Pair chi2 deviation to PV from KFParticle
 DECLARE_SOA_COLUMN(DeviationxyPairKF, deviationxyPairKF, float);                         //! Pair chi2 deviation to PV in XY from KFParticle
+DECLARE_SOA_COLUMN(BdtBackground, bdtBackground, float);                                 //! BDT output score for the background class
+DECLARE_SOA_COLUMN(BdtPrompt, bdtPrompt, float);                                         //! BDT output score for the prompt class
+DECLARE_SOA_COLUMN(BdtNonprompt, bdtNonprompt, float);                                   //! BDT output score for the nonprompt class
 // DECLARE_SOA_INDEX_COLUMN(ReducedMuon, reducedmuon2); //!
 DECLARE_SOA_COLUMN(CosThetaHE, costhetaHE, float);             //! Cosine in the helicity frame
 DECLARE_SOA_COLUMN(PhiHE, phiHe, float);                       //! Phi in the helicity frame
@@ -931,6 +982,12 @@ DECLARE_SOA_TABLE_STAGED(DielectronsAll, "RTDIELECTRONALL", //!
                          reducedpair::Lz,
                          reducedpair::Lxy);
 
+DECLARE_SOA_TABLE_STAGED(DielectronsMls, "RTDIELECTRONML", //!
+                         reducedpair::CentFT0C,
+                         reducedpair::BdtBackground,
+                         reducedpair::BdtPrompt,
+                         reducedpair::BdtNonprompt);
+
 DECLARE_SOA_TABLE(DimuonsAll, "AOD", "RTDIMUONALL", //!
                   collision::PosX, collision::PosY, collision::PosZ, collision::NumContrib,
                   evsel::Selection, reducedpair::EventSelection,
@@ -993,6 +1050,9 @@ DECLARE_SOA_TABLE(DileptonsPolarization, "AOD", "RTDILPOLAR", //!
                   reducedpair::CosThetaRM,
                   reducedpair::CosThetaStarTPC, reducedpair::CosThetaStarFT0A, reducedpair::CosThetaStarFT0C);
 
+DECLARE_SOA_TABLE(DileptonsEventInfo, "AOD", "RTDILEVENTINFO", //!
+                  cent::CentFT0C, collision::PosZ, collision::NumContrib, reducedevent::Psi2Random, reducedevent::Psi2A, reducedevent::Psi2B, reducedevent::Psi2C);
+
 using Dielectron = Dielectrons::iterator;
 using StoredDielectron = StoredDielectrons::iterator;
 using Dimuon = Dimuons::iterator;
@@ -1002,11 +1062,13 @@ using DimuonExtra = DimuonsExtra::iterator;
 using DileptonFlow = DileptonsFlow::iterator;
 using DileptonInfo = DileptonsInfo::iterator;
 using DielectronAll = DielectronsAll::iterator;
+using DielectronMl = DielectronsMls::iterator;
 using DimuonAll = DimuonsAll::iterator;
 using DileptonMiniTree = DileptonsMiniTree::iterator;
 using DileptonMiniTreeGen = DileptonsMiniTreeGen::iterator;
 using DileptonMiniTreeRec = DileptonsMiniTreeRec::iterator;
 using DileptonPolarization = DileptonsPolarization::iterator;
+using DileptonEventInfo = DileptonsEventInfo::iterator;
 
 // Tables for using analysis-dilepton-track with analysis-asymmetric-pairing
 DECLARE_SOA_TABLE(Ditracks, "AOD", "RTDITRACK", //!

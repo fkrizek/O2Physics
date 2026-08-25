@@ -12,6 +12,10 @@
 // Contact: iarsene@cern.ch, i.c.arsene@fys.uio.no
 //   Configurable workflow for running several DQ or other PWG analyses
 
+// Included verbatim by the *_workflowSpec.cxx variants and precompiled into
+// TableReaderWithAssocPCH; without the guard the two collide.
+#pragma once
+
 #include "PWGDQ/Core/AnalysisCompositeCut.h"
 #include "PWGDQ/Core/AnalysisCut.h"
 #include "PWGDQ/Core/CutsLibrary.h"
@@ -2080,11 +2084,12 @@ struct AnalysisSameEventPairing {
             dileptonInfoList(event.collisionId(), event.posX(), event.posY(), event.posZ());
           }
           if (fConfigOptions.polarTables.value) {
-            dileptonPolarList(VarManager::fgValues[VarManager::kCosThetaHE], VarManager::fgValues[VarManager::kPhiHE], VarManager::fgValues[VarManager::kPhiTildeHE],
+            dileptonPolarList(VarManager::fgValues[VarManager::kMass], VarManager::fgValues[VarManager::kPt], VarManager::fgValues[VarManager::kEta], t1.sign() + t2.sign(), twoTrackFilter,
+                              VarManager::fgValues[VarManager::kCosThetaHE], VarManager::fgValues[VarManager::kPhiHE], VarManager::fgValues[VarManager::kPhiTildeHE],
                               VarManager::fgValues[VarManager::kCosThetaCS], VarManager::fgValues[VarManager::kPhiCS], VarManager::fgValues[VarManager::kPhiTildeCS],
                               VarManager::fgValues[VarManager::kCosThetaPP], VarManager::fgValues[VarManager::kPhiPP], VarManager::fgValues[VarManager::kPhiTildePP],
                               VarManager::fgValues[VarManager::kCosThetaRM],
-                              VarManager::fgValues[VarManager::kCosThetaStarTPC], VarManager::fgValues[VarManager::kCosThetaStarFT0A], VarManager::fgValues[VarManager::kCosThetaStarFT0C]);
+                              VarManager::fgValues[VarManager::kCosThetaStarTPC], VarManager::fgValues[VarManager::kCosThetaStarFT0A], VarManager::fgValues[VarManager::kCosThetaStarFT0C], VarManager::fgValues[VarManager::kCosThetaStarRandom]);
             dileptonEventInfoList(VarManager::fgValues[VarManager::kCentFT0C], VarManager::fgValues[VarManager::kVtxZ], VarManager::fgValues[VarManager::kVtxNcontrib], VarManager::fgValues[VarManager::kRandomPsi2], VarManager::fgValues[VarManager::kPsi2A], VarManager::fgValues[VarManager::kPsi2B], VarManager::fgValues[VarManager::kPsi2C]);
           }
           if constexpr (trackHasCov && TTwoProngFitter) {

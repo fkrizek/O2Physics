@@ -137,14 +137,13 @@ struct HfTaskDeuteronFromLb {
 
     qaHistos.add("Data/hDCAxyVsPt", "DCAxy #bar{d} vs p_{T}", {HistType::kTH2D, {ptAxis, dcaXyAxis}});
     qaHistos.add("Data/hDCAzVsPt", "DCAz #bar{d} vs p_{T}", {HistType::kTH2D, {ptAxis, dcaZAxis}});
-    qaHistos.add("Data/hnSigmaTPCVsPt", "n#sigma TPC vs p_{T} for #bar{d} hypothesis; p_{T} (GeV/c); n#sigma TPC", {HistType::kTH2D, {ptAxis, nSigmaAxis}});
-    qaHistos.add("Data/hnSigmaTOFVsPt", "n#sigma TOF vs p_{T} for #bar{d} hypothesis; p_{T} (GeV/c); n#sigma TOF", {HistType::kTH2D, {ptAxis, nSigmaAxis}});
+    qaHistos.add("Data/hnSigmaTPCVsPtFinalSel", "n#sigma TPC vs p_{T} for #bar{d} hypothesis; p_{T} (GeV/c); n#sigma TPC", {HistType::kTH2D, {ptAxis, nSigmaAxis}});
+    qaHistos.add("Data/hnSigmaTOFVsPtFinalSel", "n#sigma TOF vs p_{T} for #bar{d} hypothesis; p_{T} (GeV/c); n#sigma TOF", {HistType::kTH2D, {ptAxis, nSigmaAxis}});
     qaHistos.add("Data/ptAntiDeuteron", "ptAntiDeuteron", {HistType::kTH1F, {ptAxis}});
     qaHistos.add("Data/etaAntideuteron", "etaAntideuteron", {HistType::kTH1F, {{100, -1.0f, 1.0f, "eta #bar{d}"}}});
     qaHistos.add("Data/hVtxZ", "Z-Vertex distribution after selection;Z (cm)", HistType::kTH1F, {{100, -50, 50}});
-    qaHistos.add("Data/hnSigmaTOFVsPtPurity", "n#sigma TOF vs p_{T} for #bar{d} hypothesis for Data-driven purity check; p_{T} (GeV/c); n#sigma TOF", {HistType::kTH2D, {ptAxis, nSigmaAxis}});
-    qaHistos.add("Data/hnSigmaTOFVsPtPurityVeto", "n#sigma TOF vs p_{T} for #bar{d} hypothesis for Data-driven purity check with TPC veto for e,pi,K,p; p_{T} (GeV/c); n#sigma TOF", {HistType::kTH2D, {ptAxis, nSigmaAxis}});
-    qaHistos.add("Data/hnSigmaTOFVsPtPurityVetoTPCTOFClean", "n#sigma TOF vs p_{T} for #bar{d} hypothesis for Data-driven purity check with TPC and TOF veto for e,pi,K,p; p_{T} (GeV/c); n#sigma TOF", {HistType::kTH2D, {ptAxis, nSigmaAxis}});
+    qaHistos.add("Data/hnSigmaTOFVsPtPurityNoVeto", "n#sigma TOF vs p_{T} for #bar{d} hypothesis for Data-driven purity check; p_{T} (GeV/c); n#sigma TOF", {HistType::kTH2D, {ptAxis, nSigmaAxis}});
+    qaHistos.add("Data/hnSigmaTOFVsPtPurityVeto", "n#sigma TOF vs p_{T} for #bar{d} hypothesis for Data-driven purity check with TPC+TOF veto for e,pi,K,p; p_{T} (GeV/c); n#sigma TOF", {HistType::kTH2D, {ptAxis, nSigmaAxis}});
     qaHistos.add("Data/hnSigmaTPCVsPtPurity", "n#sigma TPC vs p_{T} for #bar{d} hypothesis for Data-driven purity check; p_{T} (GeV/c); n#sigma TPC", {HistType::kTH2D, {ptAxis, nSigmaAxis}});
     qaHistos.add("Data/hnSigmaITSVsPt", "n#sigma ITS vs p_{T} for #bar{d} hypothesis, used to clean up the TPC/TOF purity sample; p_{T} (GeV/c); n#sigma ITS", {HistType::kTH2D, {ptAxis, nSigmaAxis}});
     // MC generated-level histograms
@@ -168,6 +167,10 @@ struct HfTaskDeuteronFromLb {
     qaHistos.add("MCReco/hDCAzVsPtDeFromBminus", "DCAz #bar{d} from B^{-} vs p_{T};p_{T} (GeV/c);DCA_{z} (cm)", {HistType::kTH2D, {ptAxis, dcaZAxis}});
     qaHistos.add("MCReco/hDCAzVsPtDeFromAntiLambdaB", "DCAz #bar{d} from #bar{#Lambda}_{b} vs p_{T};p_{T} (GeV/c);DCA_{z} (cm)", {HistType::kTH2D, {ptAxis, dcaZAxis}});
     qaHistos.add("MCReco/hDCAzVsPtDePrimary", "DCAz #bar{d} primary vs p_{T};p_{T} (GeV/c);DCA_{z} (cm)", {HistType::kTH2D, {ptAxis, dcaZAxis}});
+    qaHistos.add("MCReco/hDCAxyVsPtDeFromBminusSameMC", "DCAxy from B^{-}, same MC collision", {HistType::kTH2D, {ptAxis, dcaXyAxis}});
+    qaHistos.add("MCReco/hDCAxyVsPtDeFromAntiLambdaBSameMC", "DCAxy from anti-Lambda_b, same MC collision", {HistType::kTH2D, {ptAxis, dcaXyAxis}});
+    qaHistos.add("MCReco/hDCAxyVsPtDeFromAntiHypertritonSameMC", "DCAxy from anti-hypertriton, same MC collision", {HistType::kTH2D, {ptAxis, dcaXyAxis}});
+    qaHistos.add("MCReco/hDCAxyVsPtDePrimarySameMC", "DCAxy primary, same MC collision", {HistType::kTH2D, {ptAxis, dcaXyAxis}});
     qaHistos.add("MCReco/ptAntiDeuteronFromBminus", "p_{T} #bar{d} from B^{-} reco/MC anchored;p_{T} (GeV/c);Counts", HistType::kTH1F, {ptAxis});
     qaHistos.add("MCReco/ptAntiDeuteronFromAntiLambdaB", "p_{T} #bar{d} from #bar{#Lambda}_{b} reco/MC anchored;p_{T} (GeV/c);Counts", HistType::kTH1F, {ptAxis});
     qaHistos.add("MCReco/ptAntiDeuteronPrimary", "p_{T} #bar{d} primary reco/MC anchored;p_{T} (GeV/c);Counts", HistType::kTH1F, {ptAxis});
@@ -325,18 +328,16 @@ struct HfTaskDeuteronFromLb {
 
         qaHistos.fill(HIST("Data/hnSigmaITSVsPt"), track.pt(), track.itsNSigmaDe());
 
-        // TPC veto against pi/K/p/e
-        const bool passTPCVeto = std::abs(track.tpcNSigmaPi()) > cfgTPCNsigma &&
-                                 std::abs(track.tpcNSigmaKa()) > cfgTPCNsigma &&
-                                 std::abs(track.tpcNSigmaPr()) > cfgTPCNsigma &&
-                                 std::abs(track.tpcNSigmaEl()) > cfgTPCNsigma;
-        // TOF veto against pi/K/p/e
-        const bool passTOFVeto = std::abs(track.tofNSigmaPi()) > cfgTofNsigma &&
-                                 std::abs(track.tofNSigmaKa()) > cfgTofNsigma &&
-                                 std::abs(track.tofNSigmaPr()) > cfgTofNsigma &&
-                                 std::abs(track.tofNSigmaEl()) > cfgTofNsigma;
+        const bool isElectron = std::abs(track.tpcNSigmaEl()) < cfgTPCNsigma && std::abs(track.tofNSigmaEl()) < cfgTofNsigma;
+        const bool isNotElectron = !isElectron;
+        const bool isPion = std::abs(track.tpcNSigmaPi()) < cfgTPCNsigma && std::abs(track.tofNSigmaPi()) < cfgTofNsigma;
+        const bool isNotPion = !isPion;
+        const bool isKaon = std::abs(track.tpcNSigmaKa()) < cfgTPCNsigma && std::abs(track.tofNSigmaKa()) < cfgTofNsigma;
+        const bool isNotKaon = !isKaon;
+        const bool isProton = std::abs(track.tpcNSigmaPr()) < cfgTPCNsigma && std::abs(track.tofNSigmaPr()) < cfgTofNsigma;
+        const bool isNotProton = !isProton;
 
-        const bool isTPCDeClean = isTPCDe && passTPCVeto;
+        const bool isTPCTOFDeClean = isTPCDe && isNotElectron && isNotPion && isNotKaon && isNotProton;
 
         if (track.pt() < ptThresholdforPID) {
           if (isITSDe) {
@@ -344,26 +345,25 @@ struct HfTaskDeuteronFromLb {
           }
         } else {
           if (isTPCDe && track.hasTOF()) {
-            qaHistos.fill(HIST("Data/hnSigmaTOFVsPtPurity"), track.pt(), track.tofNSigmaDe());
+            qaHistos.fill(HIST("Data/hnSigmaTOFVsPtPurityNoVeto"), track.pt(), track.tofNSigmaDe());
           }
-          if (isTPCDeClean && track.hasTOF()) {
+          if (isTPCTOFDeClean && track.hasTOF()) {
             qaHistos.fill(HIST("Data/hnSigmaTOFVsPtPurityVeto"), track.pt(), track.tofNSigmaDe());
-          }
-          if (isTPCDeClean && passTOFVeto && track.hasTOF()) {
-            qaHistos.fill(HIST("Data/hnSigmaTOFVsPtPurityVetoTPCTOFClean"), track.pt(), track.tofNSigmaDe());
           }
         }
 
         const bool passFinalSel = (track.pt() < ptThresholdforPID && isTPCDe && isITSDe) ||
-                                  (track.pt() >= ptThresholdforPID && isTPCDeClean && passTOFVeto && isTOFDe && track.hasTOF());
+                                  (track.pt() >= ptThresholdforPID && isTPCTOFDeClean && isTOFDe && track.hasTOF());
 
         if (passFinalSel) {
           qaHistos.fill(HIST("Data/ptAntiDeuteron"), track.pt());
           qaHistos.fill(HIST("Data/etaAntideuteron"), track.eta());
           qaHistos.fill(HIST("Data/hDCAxyVsPt"), track.pt(), dca[0]);
           qaHistos.fill(HIST("Data/hDCAzVsPt"), track.pt(), dca[1]);
-          qaHistos.fill(HIST("Data/hnSigmaTPCVsPt"), track.pt(), track.tpcNSigmaDe());
-          qaHistos.fill(HIST("Data/hnSigmaTOFVsPt"), track.pt(), track.tofNSigmaDe());
+          qaHistos.fill(HIST("Data/hnSigmaTPCVsPtFinalSel"), track.pt(), track.tpcNSigmaDe());
+          if (track.pt() >= ptThresholdforPID) {
+            qaHistos.fill(HIST("Data/hnSigmaTOFVsPtFinalSel"), track.pt(), track.tofNSigmaDe());
+          }
         }
       }
     }
@@ -458,6 +458,7 @@ struct HfTaskDeuteronFromLb {
         }
 
         auto mcParticle = track.mcParticle();
+        const bool isSameMcCollision = collision.has_mcCollision() && (mcParticle.mcCollisionId() == collision.mcCollisionId());
         const bool isTrueDeuteron = (mcParticle.pdgCode() == pdgCodeDaughter);
         const bool isTPCDe = std::abs(track.tpcNSigmaDe()) < cfgTPCNsigma;
         const bool isTOFDe = std::abs(track.tofNSigmaDe()) < cfgTofNsigma;
@@ -486,18 +487,16 @@ struct HfTaskDeuteronFromLb {
           }
         }
 
-        // TPC veto against pi/K/p/e
-        const bool passTPCVeto = std::abs(track.tpcNSigmaPi()) > cfgTPCNsigma &&
-                                 std::abs(track.tpcNSigmaKa()) > cfgTPCNsigma &&
-                                 std::abs(track.tpcNSigmaPr()) > cfgTPCNsigma &&
-                                 std::abs(track.tpcNSigmaEl()) > cfgTPCNsigma;
-        // TOF veto against pi/K/p/e
-        const bool passTOFVeto = std::abs(track.tofNSigmaPi()) > cfgTofNsigma &&
-                                 std::abs(track.tofNSigmaKa()) > cfgTofNsigma &&
-                                 std::abs(track.tofNSigmaPr()) > cfgTofNsigma &&
-                                 std::abs(track.tofNSigmaEl()) > cfgTofNsigma;
+        const bool isElectron = std::abs(track.tpcNSigmaEl()) < cfgTPCNsigma && std::abs(track.tofNSigmaEl()) < cfgTofNsigma;
+        const bool isNotElectron = !isElectron;
+        const bool isPion = std::abs(track.tpcNSigmaPi()) < cfgTPCNsigma && std::abs(track.tofNSigmaPi()) < cfgTofNsigma;
+        const bool isNotPion = !isPion;
+        const bool isKaon = std::abs(track.tpcNSigmaKa()) < cfgTPCNsigma && std::abs(track.tofNSigmaKa()) < cfgTofNsigma;
+        const bool isNotKaon = !isKaon;
+        const bool isProton = std::abs(track.tpcNSigmaPr()) < cfgTPCNsigma && std::abs(track.tofNSigmaPr()) < cfgTofNsigma;
+        const bool isNotProton = !isProton;
 
-        const bool isTPCDeClean = isTPCDe && passTPCVeto;
+        const bool isTPCTOFDeClean = isTPCDe && isNotElectron && isNotPion && isNotKaon && isNotProton;
 
         if (isTrueDeuteron) {
           int motherPdg = 0;
@@ -541,20 +540,29 @@ struct HfTaskDeuteronFromLb {
 
           // same final selection as in data
           const bool passFinalSel = (track.pt() < ptThresholdforPID && isTPCDe && isITSDe) ||
-                                    (track.pt() >= ptThresholdforPID && isTPCDeClean && passTOFVeto && isTOFDe && track.hasTOF());
+                                    (track.pt() >= ptThresholdforPID && isTPCTOFDeClean && isTOFDe && track.hasTOF());
           if (passFinalSel) {
             if (motherPdg == pdgCodeBeautyMeson) {
               qaHistos.fill(HIST("MCReco/hDCAxyVsPtDeFromBminus"), track.pt(), dca[0]);
+              if (isSameMcCollision) {
+                qaHistos.fill(HIST("MCReco/hDCAxyVsPtDeFromBminusSameMC"), track.pt(), dca[0]);
+              }
               qaHistos.fill(HIST("MCReco/hDCAzVsPtDeFromBminus"), track.pt(), dca[1]);
               qaHistos.fill(HIST("MCReco/hDCAxy-FromBMeson"), dca[0]);
               qaHistos.fill(HIST("MCReco/ptAntiDeuteronFromBminus"), track.pt());
             } else if (motherPdg == pdgCodeBeautyBaryon) {
               qaHistos.fill(HIST("MCReco/hDCAxyVsPtDeFromAntiLambdaB"), track.pt(), dca[0]);
+              if (isSameMcCollision) {
+                qaHistos.fill(HIST("MCReco/hDCAxyVsPtDeFromAntiLambdaBSameMC"), track.pt(), dca[0]);
+              }
               qaHistos.fill(HIST("MCReco/hDCAzVsPtDeFromAntiLambdaB"), track.pt(), dca[1]);
               qaHistos.fill(HIST("MCReco/hDCAxy-FromAntiLambdaB"), dca[0]);
               qaHistos.fill(HIST("MCReco/ptAntiDeuteronFromAntiLambdaB"), track.pt());
             } else if (motherPdg == pdgCodeHypertriton) {
               qaHistos.fill(HIST("MCReco/hDCAxyVsPtDeFromAntiHypertriton"), track.pt(), dca[0]);
+              if (isSameMcCollision) {
+                qaHistos.fill(HIST("MCReco/hDCAxyVsPtDeFromAntiHypertritonSameMC"), track.pt(), dca[0]);
+              }
               qaHistos.fill(HIST("MCReco/hDCAzVsPtDeFromAntiHypertriton"), track.pt(), dca[1]);
               qaHistos.fill(HIST("MCReco/hDCAxy-FromAntiHypertriton"), dca[0]);
               qaHistos.fill(HIST("MCReco/ptAntiDeuteronFromAntiHypertriton"), track.pt());
@@ -562,6 +570,9 @@ struct HfTaskDeuteronFromLb {
               qaHistos.fill(HIST("MCReco/hDCAxyVsPtDePrimary"), track.pt(), dca[0]);
               qaHistos.fill(HIST("MCReco/hDCAzVsPtDePrimary"), track.pt(), dca[1]);
               qaHistos.fill(HIST("MCReco/hDCAxy-Primary"), dca[0]);
+              if (isSameMcCollision) {
+                qaHistos.fill(HIST("MCReco/hDCAxyVsPtDePrimarySameMC"), track.pt(), dca[0]);
+              }
               qaHistos.fill(HIST("MCReco/ptAntiDeuteronPrimary"), track.pt());
             }
           }
